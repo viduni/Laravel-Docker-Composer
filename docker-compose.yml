@@ -1,0 +1,37 @@
+version: "3.7"
+
+services:
+    mysql:
+        image: mysql:8.0.24
+        env_file:
+        - ./.env
+        ports:
+        - $MYSQL_PORT:3306
+        volumes:
+        - ./vols/mysql/data/:/var/lib/mysql/
+        user: $UID:$UID
+    app:
+        image: $APP_IMAGE
+        build:
+            context: .
+            dockerfile: ./app.Dockerfile
+            args:
+                UID: $UID
+        volumes:
+            - $APP_VOLUMES_SRC:/var/www/html/
+            - ./vols/app/docker-user-home/:/home/www-data/
+        env_file:
+            - ./.env
+    static:
+        image: nginx:1.19.6-alpine
+        volumes:
+            - $STATIC_VOLUMES_PUBLIC:/usr/share/nginx/html/
+    proxy:
+        image: $PROXY_IMAGE
+        build:
+            context: .
+            dockerfile: ./proxy.Dockerfile
+        ports:
+            - $PROXY_PORT:80
+        env_file:
+            - ./.env
